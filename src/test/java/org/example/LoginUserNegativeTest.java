@@ -3,6 +3,7 @@ package org.example;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -15,6 +16,7 @@ public class LoginUserNegativeTest {
     public String email = randomString(10) + "@yandex.ru";
     public String password = randomString(15);
     public String name = randomString(12);
+    public String authorization;
 
     @Before
     public void setUp() {
@@ -28,6 +30,22 @@ public class LoginUserNegativeTest {
                 .and()
                 .body(newUser)
                 .post(Constant.CREATE_USER_API);
+    }
+    @After
+    public void deleteUser(){
+        LoginUser loginUser = new LoginUser(email, password);
+        authorization =  given()
+                .header("Content-type", "application/json")
+                .and()
+                .body(loginUser)
+                .when()
+                .post(Constant.LOGIN_USER_API)
+                .then().extract().body().path("accessToken");
+        DeleteUser delete = new DeleteUser(email,password);
+        given()
+                .header("Authorization", authorization)
+                .body(delete)
+                .delete(Constant.DELETE_USER_API);
     }
     @Test
     @DisplayName("Negative test - Check login courier in system with non-existent email")
